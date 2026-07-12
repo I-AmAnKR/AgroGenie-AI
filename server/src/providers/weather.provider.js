@@ -241,6 +241,10 @@ async function geocodeLocation(locationName) {
     `&language=en` +
     `&format=json`
 
+  logger.info("WeatherProvider: Full Geocoding URL", {
+  url,
+  })  
+
   logger.info('WeatherProvider: Geocoding Request', {
     location: cleanedLocation,
     url,
@@ -266,16 +270,22 @@ async function geocodeLocation(locationName) {
     return null
   }
 
-  let json
+let json
 
-  try {
-    json = await response.json()
-  } catch (err) {
-    logger.error('WeatherProvider: Invalid geocoding JSON', {
-      error: err.message,
-    })
-    return null
-  }
+try {
+  const rawText = await response.text()
+
+  logger.info("WeatherProvider: Raw Geocoding Response", {
+    body: rawText,
+  })
+
+  json = JSON.parse(rawText)
+} catch (err) {
+  logger.error("WeatherProvider: Invalid geocoding JSON", {
+    error: err.message,
+  })
+  return null
+}
 
   logger.info('WeatherProvider: Geocoding Response', json)
 
