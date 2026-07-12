@@ -75,8 +75,16 @@ function wmoCodeToCondition(code) {
 async function fetchWithTimeout(url, timeoutMs) {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), timeoutMs)
+
   try {
-    const response = await fetch(url, { signal: controller.signal })
+    const response = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        "User-Agent": "AgroGenieAI/1.0",
+        "Accept": "application/json"
+      }
+    })
+
     clearTimeout(timer)
     return response
   } catch (err) {
@@ -84,7 +92,6 @@ async function fetchWithTimeout(url, timeoutMs) {
     throw err
   }
 }
-
 // ── Error mapping ─────────────────────────────────────────────────────────
 
 /**
