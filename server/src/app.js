@@ -39,11 +39,18 @@ if (config.security.extraOrigins) {
 app.use(
   cors({
     origin: (origin, cb) => {
-      // Allow non-browser tools (null/undefined origin) in dev and test
-      if (!origin && (config.server.isDev || config.server.isTest)) return cb(null, true)
-      if (allowedOrigins.includes(origin)) return cb(null, true)
-      cb(new Error(`CORS: Origin not allowed: ${origin}`))
-    },
+    //Allow requests without an Origin header
+    // (Render health checks, curl, Postman, server-to-server requests)
+    if (!origin) {
+      return cb(null, true);
+    }
+
+    if (allowedOrigins.includes(origin)) {
+        return cb(null, true);
+  }
+
+    return cb(new Error(`CORS: Origin not allowed: ${origin}`));
+  },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
     credentials: true,
