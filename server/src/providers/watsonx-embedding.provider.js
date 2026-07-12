@@ -89,13 +89,13 @@ function mapSdkError(err) {
 
   if (status === 401 || message.includes('Unauthorized') || message.includes('401')) {
     appErr.code = 'EMBEDDING_AUTH_ERROR'
-    appErr.statusCode = 502
+    appErr.statusCode = 401
     appErr.message = 'Embedding provider authentication failed. Verify WATSONX_API_KEY.'
     return appErr
   }
-  if (status === 403 || message.includes('Forbidden') || message.includes('403')) {
-    appErr.code = 'EMBEDDING_AUTH_ERROR'
-    appErr.statusCode = 502
+  if (status === 403 || message.includes('Forbidden') || message.includes('403') || message.toLowerCase().includes('project')) {
+    appErr.code = 'EMBEDDING_PROJECT_ERROR'
+    appErr.statusCode = 403
     appErr.message = 'Embedding provider access denied. Verify WATSONX_PROJECT_ID and IAM permissions.'
     return appErr
   }
@@ -104,9 +104,15 @@ function mapSdkError(err) {
     message.toLowerCase().includes('model not found') ||
     message.toLowerCase().includes('unknown model')
   ) {
-    appErr.code = 'EMBEDDING_CONFIGURATION_ERROR'
-    appErr.statusCode = 502
+    appErr.code = 'EMBEDDING_MODEL_NOT_FOUND'
+    appErr.statusCode = 404
     appErr.message = 'Embedding model not found. Verify WATSONX_EMBEDDING_MODEL_ID in .env.'
+    return appErr
+  }
+  if (status === 400 || message.toLowerCase().includes('bad request')) {
+    appErr.code = 'EMBEDDING_BAD_REQUEST'
+    appErr.statusCode = 400
+    appErr.message = 'Embedding provider rejected the request. Verify payload format.'
     return appErr
   }
   if (status === 429 || message.toLowerCase().includes('rate limit')) {
@@ -119,11 +125,12 @@ function mapSdkError(err) {
     message.toLowerCase().includes('timeout') ||
     message.includes('ETIMEDOUT') ||
     message.includes('ECONNABORTED') ||
+    message.includes('ENOTFOUND') ||
     status === 408
   ) {
-    appErr.code = 'EMBEDDING_TIMEOUT'
+    appErr.code = 'EMBEDDING_NETWORK_ERROR'
     appErr.statusCode = 504
-    appErr.message = 'Embedding provider request timed out.'
+    appErr.message = 'Embedding provider request timed out or network failed.'
     return appErr
   }
   if (status >= 500) {
@@ -162,28 +169,61 @@ export const watsonxEmbeddingProvider = {
     }
 
     const client = getClient()
-    const { projectId, embeddingModelId } = { ...config.watsonx, embeddingModelId: config.rag.embeddingModelId }
+    const { projectId, url: endpoint } = config.watsonx
+    let currentModelId = config.rag.embeddingModelId
 
     logger.debug('watsonx.ai embedText request', {
       requestId: options.metadata?.requestId,
-      modelId: embeddingModelId,
+      modelId: currentModelId,
       textCount: texts.length,
     })
+
+    const logErrorDetails = (error, modelId) => {
+      logger.error('watsonx.ai embedText error', {
+        requestId: options.metadata?.requestId,
+        provider: 'watsonx-embedding',
+        httpStatus: error.status ?? error.statusCode ?? 'N/A',
+        ibmErrorCode: error.code ?? 'N/A',
+        ibmErrorMessage: error.message ?? 'N/A',
+        responseBody: error.body ?? error.response?.data ?? 'N/A',
+        modelId,
+        endpoint,
+        projectId,
+        payload: { modelId, projectId, inputs: texts }
+      })
+    }
 
     let response
     try {
       response = await client.embedText({
-        modelId: embeddingModelId,
+        modelId: currentModelId,
         projectId,
-        inputs: texts.map((t) => ({ text: t })),
+        inputs: texts, // Correct payload structure for the IBM SDK (array of strings)
       })
     } catch (err) {
-      logger.error('watsonx.ai embedText error', {
-        requestId: options.metadata?.requestId,
-        provider: 'watsonx-embedding',
-        httpStatus: err.status ?? err.statusCode ?? 'N/A',
-      })
-      throw mapSdkError(err)
+      const isModelNotFoundError = err.status === 404 || err.message?.toLowerCase().includes('model not found') || err.message?.toLowerCase().includes('unknown model')
+      const fallbackModelId = config.rag.fallbackEmbeddingModelId
+      
+      if (isModelNotFoundError && fallbackModelId && fallbackModelId !== currentModelId) {
+        logger.warn('watsonx.ai embedText model not found, falling back to configured fallback model', { 
+          originalModelId: currentModelId,
+          fallbackModelId 
+        })
+        currentModelId = fallbackModelId
+        try {
+          response = await client.embedText({
+            modelId: currentModelId,
+            projectId,
+            inputs: texts,
+          })
+        } catch (fallbackErr) {
+          logErrorDetails(fallbackErr, currentModelId)
+          throw mapSdkError(fallbackErr)
+        }
+      } else {
+        logErrorDetails(err, currentModelId)
+        throw mapSdkError(err)
+      }
     }
 
     // Normalize the SDK response
@@ -222,7 +262,7 @@ export const watsonxEmbeddingProvider = {
 
     return {
       vectors,
-      model: result.model_id ?? embeddingModelId,
+      model: result.model_id ?? currentModelId,
       provider: 'watsonx',
       usage,
     }
@@ -245,3 +285,4 @@ export const watsonxEmbeddingProvider = {
     }
   },
 }
+

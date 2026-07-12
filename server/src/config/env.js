@@ -92,6 +92,7 @@ const config = {
   // Populated in Phase 8 — IBM watsonx.ai Embeddings
   rag: {
     embeddingModelId: optional('WATSONX_EMBEDDING_MODEL_ID', ''),
+    fallbackEmbeddingModelId: optional('WATSONX_EMBEDDING_FALLBACK_MODEL_ID', ''),
     chunkSize: optionalInt('RAG_CHUNK_SIZE', 800),
     chunkOverlap: optionalInt('RAG_CHUNK_OVERLAP', 100),
     topK: optionalInt('RAG_TOP_K', 5),
