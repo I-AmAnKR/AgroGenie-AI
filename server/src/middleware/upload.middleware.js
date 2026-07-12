@@ -33,6 +33,23 @@ const imageUpload = multer({
   },
 })
 
+const chatUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_BYTES, files: 5 },
+  fileFilter: (_req, file, cb) => {
+    if (ALLOWED_TYPES.includes(file.mimetype)) {
+      cb(null, true)
+    } else {
+      const err = new Error(
+        `Unsupported attachment type: ${file.mimetype}. Allowed: ${ALLOWED_TYPES.join(', ')}.`
+      )
+      err.code = 'UNSUPPORTED_FILE_TYPE'
+      err.statusCode = 415
+      cb(err)
+    }
+  },
+})
+
 /**
  * Multer error handler — translates multer errors into the standard API error shape.
  */
@@ -43,7 +60,15 @@ function handleMulterError(err, _req, res, next) {
       return res.status(413).json({
         success: false,
         data: null,
-        error: { code: 'UPLOAD_TOO_LARGE', message: `Image exceeds maximum allowed size of ${maxMb} MB.`, details: [] },
+        error: { code: 'UPLOAD_TOO_LARGE', message: `File exceeds maximum allowed size of ${maxMb} MB.`, details: [] },
+        meta: { requestId: res.locals.requestId ?? null },
+      })
+    }
+    if (err.code === 'LIMIT_FILE_COUNT') {
+      return res.status(400).json({
+        success: false,
+        data: null,
+        error: { code: 'TOO_MANY_FILES', message: 'Maximum of 5 attachments allowed.', details: [] },
         meta: { requestId: res.locals.requestId ?? null },
       })
     }
@@ -67,5 +92,10 @@ function handleMulterError(err, _req, res, next) {
 
 export const uploadImageMiddleware = [
   imageUpload.single('image'),
+  handleMulterError,
+]
+
+export const uploadChatAttachmentsMiddleware = [
+  chatUpload.array('attachments', 5),
   handleMulterError,
 ]
