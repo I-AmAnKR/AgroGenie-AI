@@ -184,9 +184,14 @@ export const cosProvider = {
       }
     } catch (err) {
       logger.error('COS uploadObject error', {
+        httpStatus: err.statusCode ?? err.$metadata?.httpStatusCode ?? 'N/A',
+        errorCode: err.code ?? err.Code ?? 'UNKNOWN',
+        errorMessage: err.message ?? 'No message provided',
+        bucket,
         key,
-        sdkCode: err.code ?? 'UNKNOWN',
-        httpStatus: err.statusCode ?? 'N/A',
+        endpoint: config.cos.endpoint,
+        region: config.cos.endpoint ? config.cos.endpoint.split('.')[1] : 'unknown',
+        rawError: err,
       })
       throw mapSdkError(err)
     }
@@ -223,8 +228,14 @@ export const cosProvider = {
       }))
     } catch (err) {
       logger.error('COS listObjects error', {
-        sdkCode: err.code ?? 'UNKNOWN',
-        httpStatus: err.statusCode ?? 'N/A',
+        httpStatus: err.statusCode ?? err.$metadata?.httpStatusCode ?? 'N/A',
+        errorCode: err.code ?? err.Code ?? 'UNKNOWN',
+        errorMessage: err.message ?? 'No message provided',
+        bucket,
+        prefix,
+        endpoint: config.cos.endpoint,
+        region: config.cos.endpoint ? config.cos.endpoint.split('.')[1] : 'unknown',
+        rawError: err,
       })
       throw mapSdkError(err)
     }
@@ -256,9 +267,14 @@ export const cosProvider = {
       }
     } catch (err) {
       logger.error('COS getObjectMetadata error', {
+        httpStatus: err.statusCode ?? err.$metadata?.httpStatusCode ?? 'N/A',
+        errorCode: err.code ?? err.Code ?? 'UNKNOWN',
+        errorMessage: err.message ?? 'No message provided',
+        bucket,
         key,
-        sdkCode: err.code ?? 'UNKNOWN',
-        httpStatus: err.statusCode ?? 'N/A',
+        endpoint: config.cos.endpoint,
+        region: config.cos.endpoint ? config.cos.endpoint.split('.')[1] : 'unknown',
+        rawError: err,
       })
       throw mapSdkError(err)
     }
@@ -284,9 +300,14 @@ export const cosProvider = {
       return stream
     } catch (err) {
       logger.error('COS getObjectStream error', {
+        httpStatus: err.statusCode ?? err.$metadata?.httpStatusCode ?? 'N/A',
+        errorCode: err.code ?? err.Code ?? 'UNKNOWN',
+        errorMessage: err.message ?? 'No message provided',
+        bucket,
         key,
-        sdkCode: err.code ?? 'UNKNOWN',
-        httpStatus: err.statusCode ?? 'N/A',
+        endpoint: config.cos.endpoint,
+        region: config.cos.endpoint ? config.cos.endpoint.split('.')[1] : 'unknown',
+        rawError: err,
       })
       throw mapSdkError(err)
     }
@@ -311,9 +332,14 @@ export const cosProvider = {
       return { key, deleted: true }
     } catch (err) {
       logger.error('COS deleteObject error', {
+        httpStatus: err.statusCode ?? err.$metadata?.httpStatusCode ?? 'N/A',
+        errorCode: err.code ?? err.Code ?? 'UNKNOWN',
+        errorMessage: err.message ?? 'No message provided',
+        bucket,
         key,
-        sdkCode: err.code ?? 'UNKNOWN',
-        httpStatus: err.statusCode ?? 'N/A',
+        endpoint: config.cos.endpoint,
+        region: config.cos.endpoint ? config.cos.endpoint.split('.')[1] : 'unknown',
+        rawError: err,
       })
       throw mapSdkError(err)
     }
