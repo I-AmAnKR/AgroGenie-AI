@@ -228,48 +228,88 @@ async function fetchOpenMeteo(latitude, longitude, days) {
  */
 async function geocodeLocation(locationName) {
   const { geocodingUrl, requestTimeoutMs } = config.weather
-  const query = encodeURIComponent(locationName)
-  const url = `${geocodingUrl}/search?name=${query}&count=1&language=en&format=json`
+
+  // Clean the location string
+  const cleanedLocation = locationName.trim()
+
+  const query = encodeURIComponent(cleanedLocation)
+
+  const url =
+    `${geocodingUrl}/search` +
+    `?name=${query}` +
+    `&count=5` +
+    `&language=en` +
+    `&format=json`
+
+  logger.info('WeatherProvider: Geocoding Request', {
+    location: cleanedLocation,
+    url,
+  })
 
   let response
+
   try {
     response = await fetchWithTimeout(url, requestTimeoutMs)
   } catch (err) {
-    logger.warn('WeatherProvider: geocoding request failed', {
-      location: locationName,
+    logger.error('WeatherProvider: Geocoding fetch failed', {
+      location: cleanedLocation,
       error: err.message,
     })
     return null
   }
 
   if (!response.ok) {
-    logger.warn('WeatherProvider: geocoding HTTP error', {
-      location: locationName,
+    logger.error('WeatherProvider: Geocoding HTTP Error', {
       status: response.status,
+      location: cleanedLocation,
     })
     return null
   }
 
   let json
+
   try {
     json = await response.json()
-  } catch {
+  } catch (err) {
+    logger.error('WeatherProvider: Invalid geocoding JSON', {
+      error: err.message,
+    })
     return null
   }
 
-  const results = json.results
-  if (!results || results.length === 0) return null
+  logger.info('WeatherProvider: Geocoding Response', json)
 
-  const first = results[0]
+  if (!json.results || json.results.length === 0) {
+    logger.error('WeatherProvider: No locations returned', {
+      location: cleanedLocation,
+    })
+    return null
+  }
+
+  // Prefer an India result
+  const indiaResult =
+    json.results.find(
+      r =>
+        r.country_code === 'IN' ||
+        r.country === 'India'
+    ) || json.results[0]
+
+  logger.info('WeatherProvider: Selected Location', {
+    name: indiaResult.name,
+    state: indiaResult.admin1,
+    country: indiaResult.country,
+    latitude: indiaResult.latitude,
+    longitude: indiaResult.longitude,
+  })
+
   return {
-    latitude: first.latitude,
-    longitude: first.longitude,
-    name: first.name,
-    admin1: first.admin1 ?? null, // State/province
-    country: first.country ?? null,
+    latitude: indiaResult.latitude,
+    longitude: indiaResult.longitude,
+    name: indiaResult.name,
+    admin1: indiaResult.admin1 ?? null,
+    country: indiaResult.country ?? null,
   }
 }
-
 // ── Response normalization ────────────────────────────────────────────────
 
 /**
@@ -400,15 +440,26 @@ export const realWeatherProvider = {
       throw err
     }
 
+    logger.info('WeatherProvider: Weather lookup', {
+      district,
+      state,
+      query,
+    })
+
     const geo = await geocodeLocation(query)
 
     if (!geo) {
-      const err = new Error(`Could not find geographic coordinates for "${query}".`)
-      err.code = 'WEATHER_LOCATION_NOT_FOUND'
-      err.statusCode = 404
-      throw err
-    }
+      logger.error('WeatherProvider: Geocoding failed', {
+      district,
+      state,
+      query,
+    })
 
+  const err = new Error(`Could not find geographic coordinates for "${query}".`)
+  err.code = 'WEATHER_LOCATION_NOT_FOUND'
+  err.statusCode = 404
+  throw err
+}
     logger.debug('WeatherProvider: geocoded location', {
       query,
       latitude: geo.latitude,
