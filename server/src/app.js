@@ -13,6 +13,13 @@ import apiRoutes from './routes/index.js'
 
 const app = express()
 
+// ── Reverse-proxy trust (Render / any load-balanced host) ──────────────────
+// Render sits behind a TLS-terminating proxy that injects X-Forwarded-For.
+// Without trust proxy=1, express-rate-limit throws ERR_ERL_UNEXPECTED_X_FORWARDED_FOR
+// because it sees the header but Express hasn't been told to trust it.
+// '1' means: trust the first hop (the immediately-adjacent proxy) only.
+app.set('trust proxy', 1)
+
 // ── Security headers (Phase 17A: tighten defaults) ──────────────────────────
 app.use(helmet({
   contentSecurityPolicy: {

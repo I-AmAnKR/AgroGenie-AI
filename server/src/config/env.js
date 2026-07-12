@@ -126,7 +126,9 @@ const config = {
     // In-memory cache TTL in seconds (30 min default)
     cacheTtlSeconds: optionalInt('MARKET_CACHE_TTL_SECONDS', 1800),
     // HTTP request timeout in milliseconds
-    requestTimeoutMs: optionalInt('MARKET_REQUEST_TIMEOUT_MS', 10000),
+    // data.gov.in is a government host; from cloud egress IPs (Render, etc.)
+    // it regularly takes 12–20 s to respond.  30 s avoids spurious timeouts.
+    requestTimeoutMs: optionalInt('MARKET_REQUEST_TIMEOUT_MS', 30000),
     // Maximum records to request per provider call
     maxRecords: optionalInt('MARKET_MAX_RECORDS', 100),
   },

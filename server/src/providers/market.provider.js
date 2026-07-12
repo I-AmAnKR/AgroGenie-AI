@@ -474,6 +474,18 @@ async function fetchAgmarknetRecords({ commodity, state, district, market, fromD
     returned: records.length,
   })
 
+  // ── Market-filter retry ───────────────────────────────────────────────
+  // The Agmarknet dataset stores mandi names inconsistently
+  // ("Karnal", "Karnal Mandi", "KARNAL", etc.).  When a market filter
+  // was applied and returned zero records, retry without it so the farmer
+  // at least gets district-level prices rather than an empty response.
+  if (records.length === 0 && market) {
+    logger.info('MarketProvider: zero results with market filter — retrying without market filter', {
+      commodity, state, district, market,
+    })
+    return fetchAgmarknetRecords({ commodity, state, district, market: null, fromDate, toDate, limit })
+  }
+
   return records
 }
 
