@@ -12,9 +12,6 @@
 import { processChat } from '../services/chat.service.js'
 import { contextMiddleware } from '../middleware/context.middleware.js'
 import { success, error } from '../utils/apiResponse.js'
-import { getStorageProvider } from '../providers/storage.provider.factory.js'
-import { v4 as uuidv4 } from 'uuid'
-import config from '../config/env.js'
 import logger from '../utils/logger.js'
 
 // AI error codes that map to specific HTTP responses
@@ -49,35 +46,27 @@ export async function chat(req, res) {
 
   // Handle uploaded files via multer
   if (req.files && req.files.length > 0) {
-    try {
-      const storageProvider = getStorageProvider()
+    logger.info('Upload started', { fileCount: req.files.length, requestId })
+    
+    const parsedFiles = req.files.map(file => {
+      logger.info('Processing uploaded file', {
+        filename: file.originalname,
+        mimeType: file.mimetype,
+        size: file.size,
+        requestId
+      })
       
-      const uploadedAttachments = await Promise.all(
-        req.files.map(async (file) => {
-          const id = uuidv4()
-          const safeName = file.originalname.toLowerCase().replace(/[^a-z0-9._-]/g, '_').slice(0, 100)
-          const objectKey = `chat-attachments/${id}-${safeName}`
-          
-          await storageProvider.uploadObject(objectKey, file.buffer, file.mimetype, {
-            originalname: file.originalname,
-            category: 'chat-attachment',
-            uploadedby: userId
-          })
-          
-          return {
-            type: file.mimetype.startsWith('image/') ? 'image' : 'document',
-            objectKey: objectKey,
-            mimeType: file.mimetype,
-            originalName: file.originalname
-          }
-        })
-      )
-      
-      attachments = [...(Array.isArray(attachments) ? attachments : []), ...uploadedAttachments]
-    } catch (uploadErr) {
-      logger.error('Failed to upload chat attachments to COS', { error: uploadErr.message, requestId })
-      return error(res, 'UPLOAD_ERROR', 'Failed to upload attachments', 500)
-    }
+      return {
+        type: file.mimetype.startsWith('image/') ? 'image' : 'document',
+        originalName: file.originalname,
+        filename: file.originalname,
+        mimeType: file.mimetype,
+        size: file.size,
+        buffer: file.buffer
+      }
+    })
+    
+    attachments = [...(Array.isArray(attachments) ? attachments : []), ...parsedFiles]
   }
 
   if (!message.trim() && (!attachments || attachments.length === 0)) {

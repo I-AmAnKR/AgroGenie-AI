@@ -26,9 +26,9 @@ import { resolveWeatherLocation } from '../../services/locationResolver.service.
 
 export async function runDiseaseAgent({ message, language, farmerContext = {}, memoryContext = null, attachments = [], metadata = {} }) {
   const start = Date.now()
-  const imageAttachment = attachments.find(a => a.type === 'image')
+  const imageAttachment = attachments.find(a => a.type === 'image' || a.mimeType?.startsWith('image/'))
 
-  if (!imageAttachment || !imageAttachment.objectKey) {
+  if (!imageAttachment || (!imageAttachment.objectKey && !imageAttachment.buffer)) {
     logger.warn('DiseaseAgent called without image attachment', { requestId: metadata.requestId })
     return normalizeAgentResult(createAgentResult({
       intent: INTENT.DISEASE,
@@ -38,9 +38,42 @@ export async function runDiseaseAgent({ message, language, farmerContext = {}, m
     }))
   }
 
+  logger.info('DiseaseAgent received attachment', { 
+    filename: imageAttachment.originalName || imageAttachment.filename, 
+    mimeType: imageAttachment.mimeType,
+    requestId: metadata.requestId 
+  })
+
+  // Handle COS Upload if image has not been uploaded yet
+  let objectKey = imageAttachment.objectKey
+  if (!objectKey && imageAttachment.buffer) {
+    try {
+      const { getStorageProvider } = await import('../../providers/storage.provider.factory.js')
+      const { v4: uuidv4 } = await import('uuid')
+      const storageProvider = getStorageProvider()
+      
+      const safeName = (imageAttachment.originalName || 'image').toLowerCase().replace(/[^a-z0-9._-]/g, '_').slice(0, 100)
+      objectKey = `disease-images/${uuidv4()}-${safeName}`
+      
+      await storageProvider.uploadObject(objectKey, imageAttachment.buffer, imageAttachment.mimeType, {
+        category: 'disease-detection',
+        originalname: imageAttachment.originalName
+      })
+      logger.info('COS upload success', { objectKey, requestId: metadata.requestId })
+    } catch (err) {
+      logger.error('COS upload failure', { error: err.message, requestId: metadata.requestId })
+      return normalizeAgentResult(createAgentResult({
+        intent: INTENT.DISEASE,
+        status: RESULT_STATUS.CAPABILITY_NOT_AVAILABLE,
+        answer: 'Failed to process the uploaded image. Please try again later.',
+        agentsUsed: ['DiseaseAgent'],
+      }))
+    }
+  }
+
   // Step 1: Vision Evidence
   const visionProvider = getVisionProvider()
-  const candidateSymptoms = await visionProvider.analyzeImage(imageAttachment.objectKey, imageAttachment.mimeType)
+  const candidateSymptoms = await visionProvider.analyzeImage(objectKey, imageAttachment.mimeType)
 
   // Step 2: Disease Matching (broad search based on all symptoms)
   let candidateDiseases = []
