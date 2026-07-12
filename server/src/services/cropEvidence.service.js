@@ -331,20 +331,29 @@ export async function collectSchemeEvidence({ farmerContext, metadata = {} }) {
  *   collectionWarnings: string[]
  * }>}
  */
-export async function collectAllEvidence({ candidates, farmerContext, season, metadata = {} }) {
+export async function collectAllEvidence({ candidates, farmerContext, season, metadata = {}, collectSchemes = false }) {
   const { location } = farmerContext
   const collectionWarnings = []
 
-  // Collect weather + scheme in parallel (shared across all crops)
-  const [weatherEvidence, schemeEvidence] = await Promise.all([
-    collectWeatherEvidence({ location, metadata }),
-    collectSchemeEvidence({ farmerContext, metadata }),
-  ])
+  // Collect weather + (optionally) scheme in parallel — shared across all crops.
+  // Scheme collection is skipped unless the caller explicitly requests it
+  // (i.e. the farmer's message contains scheme/subsidy keywords).
+  const sharedTasks = [collectWeatherEvidence({ location, metadata })]
+  if (collectSchemes) {
+    sharedTasks.push(collectSchemeEvidence({ farmerContext, metadata }))
+  }
+
+  const sharedResults = await Promise.all(sharedTasks)
+  const weatherEvidence = sharedResults[0]
+  const schemeEvidence = collectSchemes
+    ? sharedResults[1]
+    : { available: false, hasRelevantSchemes: false, schemeCount: 0, schemeNames: [], isDemo: false, error: null }
 
   if (!weatherEvidence.available) {
     collectionWarnings.push('Weather data could not be retrieved — weather suitability not evaluated')
   }
-  if (!schemeEvidence.available) {
+  // Only warn about schemes if they were actually requested
+  if (collectSchemes && !schemeEvidence.available) {
     collectionWarnings.push('Government scheme data could not be retrieved')
   }
 
