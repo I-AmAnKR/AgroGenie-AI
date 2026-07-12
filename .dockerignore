@@ -1,0 +1,50 @@
+# ── AgroGenie AI — .dockerignore ─────────────────────────────────────────────
+# Exclude files that should never be in the Docker image.
+
+# Dependencies (installed in Docker build)
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Environment files — NEVER bake credentials into the image
+.env
+server/.env
+**/.env
+**/.env.local
+**/.env.*.local
+
+# Git and CI
+.git/
+.gitignore
+.github/
+.bob/
+
+# Development artifacts
+client/dist/
+*.log
+npm-debug.log*
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Tests and dev tooling
+server/tests/
+**/*.test.js
+**/*.spec.js
+coverage/
+.nyc_output/
+
+# Documentation (not needed at runtime)
+docs/
+deployment/
+*.md
+!server/README.md
+
+# Build output (rebuilt in Docker)
+dist/
+build/

@@ -1,0 +1,43 @@
+﻿# AgroGenie AI — .gitignore
+
+# Secrets — NEVER commit
+.env
+.env.local
+server/.env
+server/.env.local
+
+# Dependencies
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Build output
+client/dist/
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+logs/
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE
+.vscode/
+.idea/
+
+# Bob AI assistant
+.bob/
+
+# Temp files
+*.swp
+step-17-final-implementation-report.html
+verify.mjs

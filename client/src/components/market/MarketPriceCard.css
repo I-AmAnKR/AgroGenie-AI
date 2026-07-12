@@ -1,0 +1,227 @@
+/* MarketPriceCard — Phase 11 */
+
+.market-price-card {
+  background: var(--color-surface, #f7f8fa);
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.8125rem;
+  position: relative;
+}
+
+.market-price-card-demo {
+  border-color: rgba(245, 158, 11, 0.35);
+  background: rgba(255, 251, 235, 0.5);
+}
+
+.market-demo-badge {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 0.675rem;
+  font-weight: 600;
+  color: #92400e;
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 4px;
+  padding: 1px 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.market-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 5px;
+  gap: 8px;
+}
+
+.market-card-commodity-block {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--color-text, #1f2328);
+}
+
+.market-card-commodity {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--color-text, #1f2328);
+}
+
+.market-card-variety {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary, #57606a);
+}
+
+.market-freshness-badge {
+  font-size: 0.675rem;
+  font-weight: 600;
+  border-radius: 4px;
+  padding: 1px 7px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.market-card-location {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.775rem;
+  color: var(--color-text-secondary, #57606a);
+  margin-bottom: 8px;
+}
+
+.market-price-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.market-price-cell {
+  background: white;
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 5px;
+  padding: 5px 8px;
+  text-align: center;
+}
+
+.market-price-cell-modal {
+  border-color: var(--color-primary, #3b82d4);
+  background: rgba(59, 130, 212, 0.04);
+}
+
+.market-price-label {
+  display: block;
+  font-size: 0.675rem;
+  color: var(--color-text-secondary, #57606a);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 2px;
+}
+
+.market-price-value {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text, #1f2328);
+}
+
+.market-price-cell-modal .market-price-value {
+  color: var(--color-primary, #3b82d4);
+}
+
+.market-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.7rem;
+  color: var(--color-text-muted, #57606a);
+  flex-wrap: wrap;
+}
+
+.market-card-unit-note {
+  color: var(--color-text-muted, #6b7280);
+}
+
+.market-card-date {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.market-card-arrivals {
+  color: var(--color-text-muted, #6b7280);
+}
+
+/* Compact variant */
+.market-price-card-compact {
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+.market-card-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.market-card-modal {
+  font-weight: 600;
+  color: var(--color-primary, #3b82d4);
+  font-size: 0.875rem;
+}
+
+.market-card-unit {
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: var(--color-text-secondary, #57606a);
+}
+
+.market-card-meta {
+  font-size: 0.72rem;
+  color: var(--color-text-secondary, #57606a);
+  gap: 12px;
+}
+
+.market-card-meta span {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+/* Market data panel inside chat */
+.market-data-panel {
+  margin-top: 8px;
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.market-data-panel-header {
+  padding: 7px 12px;
+  background: rgba(245, 158, 11, 0.06);
+  border-bottom: 1px solid var(--color-border, #e5e7eb);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-text, #1f2328);
+}
+
+.market-data-panel-records {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.market-data-panel-records .market-price-card {
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+}
+
+.market-data-panel-records .market-price-card:last-child {
+  border-bottom: none;
+}
+
+.market-stats-summary {
+  padding: 8px 12px;
+  background: rgba(59, 130, 212, 0.04);
+  border-top: 1px solid var(--color-border, #e5e7eb);
+  font-size: 0.775rem;
+  color: var(--color-text-secondary, #57606a);
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.market-stat-item strong {
+  color: var(--color-text, #1f2328);
+}

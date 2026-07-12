@@ -1,0 +1,41 @@
+import axios from 'axios'
+
+const axiosClient = axios.create({
+  baseURL: '/api/v1',
+  timeout: 30000,
+  headers: {
+    'Content-Type': 'application/json'
+  }
+})
+
+// Request interceptor — attach auth token when available
+axiosClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('agrogenie_token')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+    return config
+  },
+  (error) => Promise.reject(error)
+)
+
+// Response interceptor — normalise all API errors into a standard shape
+axiosClient.interceptors.response.use(
+  (response) => response.data,
+  (error) => {
+    const normalised = {
+      success: false,
+      error: {
+        code: error.response?.status ?? 'NETWORK_ERROR',
+        message: error.response?.data?.error?.message
+          ?? error.response?.data?.message
+          ?? error.message
+          ?? 'An unexpected error occurred'
+      }
+    }
+    return Promise.reject(normalised)
+  }
+)
+
+export default axiosClient

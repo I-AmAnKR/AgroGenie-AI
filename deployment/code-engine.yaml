@@ -1,0 +1,143 @@
+# IBM Code Engine Application Manifest
+# 
+# Usage:
+#   ibmcloud ce app create --from-file deployment/code-engine.yaml
+#
+# Or update an existing app:
+#   ibmcloud ce app update --from-file deployment/code-engine.yaml
+
+apiVersion: apps/v1
+kind: Application
+metadata:
+  name: agrogenie-ai
+  labels:
+    app: agrogenie-ai
+    project: ibm-skillsbuild-aicte-2026
+    version: "1.0.0"
+spec:
+  image: us.icr.io/agrogenie-ns/agrogenie-ai:latest
+  port: 5000
+  scale:
+    minScale: 1
+    maxScale: 5
+    initialScale: 1
+    scalingTarget: 50  # concurrent requests before scaling
+  resources:
+    cpu: "0.5"
+    memory: "1G"
+  timeout: 300
+  registrySecret: agrogenie-registry-secret
+  env:
+    # ── Server ────────────────────────────────────────────────────────────
+    - name: NODE_ENV
+      value: "production"
+    - name: PORT
+      value: "5000"
+    # CLIENT_URL must be set after deployment — use the Code Engine URL
+    # - name: CLIENT_URL
+    #   value: "https://agrogenie-ai.<region>.codeengine.appdomain.cloud"
+
+    # ── Provider mode ─────────────────────────────────────────────────────
+    - name: USE_MOCK_PROVIDERS
+      value: "false"
+    - name: ENABLE_DEMO_MODE
+      value: "false"
+
+    # ── Logging ───────────────────────────────────────────────────────────
+    - name: LOG_LEVEL
+      value: "info"
+
+    # ── Rate limiting ─────────────────────────────────────────────────────
+    - name: RATE_LIMIT_MAX_PROD
+      value: "200"
+    - name: RATE_LIMIT_WINDOW_MS
+      value: "900000"
+
+    # ── IBM watsonx.ai (inject from secret) ───────────────────────────────
+    - name: WATSONX_URL
+      value: "https://us-south.ml.cloud.ibm.com"
+    - name: GRANITE_MODEL_ID
+      value: "meta-llama/llama-3-3-70b-instruct"
+    - name: WATSONX_EMBEDDING_MODEL_ID
+      value: "ibm/slate-125m-english-rtrvr"
+
+    # ── IBM STT defaults ──────────────────────────────────────────────────
+    - name: IBM_STT_URL
+      value: "https://api.us-south.speech-to-text.watson.cloud.ibm.com"
+    - name: IBM_STT_MODEL
+      value: "en-US_BroadbandModel"
+
+    # ── IBM TTS defaults ──────────────────────────────────────────────────
+    - name: IBM_TTS_URL
+      value: "https://api.us-south.text-to-speech.watson.cloud.ibm.com"
+    - name: IBM_TTS_VOICE
+      value: "en-US_AllisonV3Voice"
+
+    # ── Weather ───────────────────────────────────────────────────────────
+    - name: WEATHER_API_URL
+      value: "https://api.open-meteo.com/v1"
+    - name: WEATHER_GEOCODING_URL
+      value: "https://geocoding-api.open-meteo.com/v1"
+
+    # ── Market ────────────────────────────────────────────────────────────
+    - name: MARKET_API_URL
+      value: "https://api.data.gov.in/resource"
+    - name: MARKET_API_RESOURCE_ID
+      value: "9ef84268-d588-465a-a308-a864a43d0070"
+
+    # ── Secrets (reference from agrogenie-secrets secret) ─────────────────
+    - name: MONGODB_URI
+      secretKeyRef:
+        name: agrogenie-secrets
+        key: MONGODB_URI
+    - name: WATSONX_API_KEY
+      secretKeyRef:
+        name: agrogenie-secrets
+        key: WATSONX_API_KEY
+    - name: WATSONX_PROJECT_ID
+      secretKeyRef:
+        name: agrogenie-secrets
+        key: WATSONX_PROJECT_ID
+    - name: IBM_COS_API_KEY
+      secretKeyRef:
+        name: agrogenie-secrets
+        key: IBM_COS_API_KEY
+    - name: IBM_COS_RESOURCE_INSTANCE_ID
+      secretKeyRef:
+        name: agrogenie-secrets
+        key: IBM_COS_RESOURCE_INSTANCE_ID
+    - name: IBM_COS_ENDPOINT
+      secretKeyRef:
+        name: agrogenie-secrets
+        key: IBM_COS_ENDPOINT
+    - name: IBM_COS_BUCKET_NAME
+      secretKeyRef:
+        name: agrogenie-secrets
+        key: IBM_COS_BUCKET_NAME
+    - name: IBM_STT_API_KEY
+      secretKeyRef:
+        name: agrogenie-secrets
+        key: IBM_STT_API_KEY
+    - name: IBM_TTS_API_KEY
+      secretKeyRef:
+        name: agrogenie-secrets
+        key: IBM_TTS_API_KEY
+    - name: MARKET_API_KEY
+      secretKeyRef:
+        name: agrogenie-secrets
+        key: MARKET_API_KEY
+  health:
+    liveness:
+      path: /api/v1/health
+      port: 5000
+      initialDelaySeconds: 15
+      periodSeconds: 30
+      timeoutSeconds: 10
+      failureThreshold: 3
+    readiness:
+      path: /api/v1/health/ready
+      port: 5000
+      initialDelaySeconds: 10
+      periodSeconds: 15
+      timeoutSeconds: 5
+      failureThreshold: 3

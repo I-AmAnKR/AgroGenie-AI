@@ -1,0 +1,95 @@
+version: '3.9'
+
+# ── AgroGenie AI — Docker Compose ────────────────────────────────────────────
+#
+# Services:
+#   agrogenie   — Full-stack app (React + Express, port 5000)
+#   mongo       — MongoDB (local dev only; use Atlas in production)
+#
+# Usage:
+#   # Start with mock providers (no IBM credentials required)
+#   docker-compose up
+#
+#   # Start with real IBM providers
+#   cp server/.env.example server/.env  # fill in credentials
+#   docker-compose --env-file server/.env up
+#
+#   # Run in background
+#   docker-compose up -d
+#
+#   # View logs
+#   docker-compose logs -f agrogenie
+#
+#   # Stop
+#   docker-compose down
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  agrogenie:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: agrogenie-ai
+    ports:
+      - "5000:5000"
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 5000
+      USE_MOCK_PROVIDERS: ${USE_MOCK_PROVIDERS:-true}
+      ENABLE_DEMO_MODE: ${ENABLE_DEMO_MODE:-false}
+      CLIENT_URL: ${CLIENT_URL:-http://localhost:5173}
+      # MongoDB — use Atlas URI in production; use local mongo service for dev
+      MONGODB_URI: ${MONGODB_URI:-mongodb://mongo:27017/agrogenie}
+      MONGODB_DB_NAME: ${MONGODB_DB_NAME:-agrogenie}
+      # IBM watsonx.ai (optional — only when USE_MOCK_PROVIDERS=false)
+      WATSONX_API_KEY: ${WATSONX_API_KEY:-}
+      WATSONX_PROJECT_ID: ${WATSONX_PROJECT_ID:-}
+      WATSONX_URL: ${WATSONX_URL:-https://us-south.ml.cloud.ibm.com}
+      GRANITE_MODEL_ID: ${GRANITE_MODEL_ID:-meta-llama/llama-3-3-70b-instruct}
+      # IBM COS (optional — only when USE_MOCK_PROVIDERS=false)
+      IBM_COS_API_KEY: ${IBM_COS_API_KEY:-}
+      IBM_COS_RESOURCE_INSTANCE_ID: ${IBM_COS_RESOURCE_INSTANCE_ID:-}
+      IBM_COS_ENDPOINT: ${IBM_COS_ENDPOINT:-}
+      IBM_COS_BUCKET_NAME: ${IBM_COS_BUCKET_NAME:-}
+      # IBM STT / TTS (optional)
+      IBM_STT_API_KEY: ${IBM_STT_API_KEY:-}
+      IBM_STT_URL: ${IBM_STT_URL:-https://api.us-south.speech-to-text.watson.cloud.ibm.com}
+      IBM_TTS_API_KEY: ${IBM_TTS_API_KEY:-}
+      IBM_TTS_URL: ${IBM_TTS_URL:-https://api.us-south.text-to-speech.watson.cloud.ibm.com}
+      # Market API
+      MARKET_API_KEY: ${MARKET_API_KEY:-}
+      # Logging
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    depends_on:
+      mongo:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:5000/api/v1/health', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    volumes:
+      - ./server/src:/app/server/src:ro  # dev hot-reload (remove in production)
+
+  mongo:
+    image: mongo:7.0-jammy
+    container_name: agrogenie-mongo
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: agrogenie
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  mongo_data:
+    driver: local
