@@ -59,7 +59,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
 # Environment defaults (override with --env-file or -e flags)
 ENV NODE_ENV=production \
     PORT=5000 \
-    USE_MOCK_PROVIDERS=true
+    # USE_MOCK_PROVIDERS=true
 
 # Start production server
 CMD ["node", "src/server.js"]
