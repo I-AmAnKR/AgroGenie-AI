@@ -96,28 +96,104 @@ const KNOWLEDGE_PATTERNS = [
 ]
 
 /**
- * Crop recommendation hints — Hinglish/Hindi patterns.
- * These are soft signals passed to the LLM classifier for disambiguation.
- * They do NOT hard-route (unlike WEATHER/MARKET) because crop questions
- * require profile context to classify confidently.
- * Used only in buildClassifierUserMessage to boost crop intent confidence.
+ * Crop recommendation deterministic patterns.
+ *
+ * These fire BEFORE the weather/market rules so a query like
+ * "which crop should I grow given the weather forecast for Karnal"
+ * is routed to CROP_RECOMMENDATION (or MULTI_INTENT when weather/market
+ * context is also explicitly requested) rather than being short-circuited
+ * to WEATHER because of the word "weather" or "forecast".
+ *
+ * Rule: if the farmer's PRIMARY ask is crop selection/suitability, route to
+ * CROP_RECOMMENDATION even when weather or market words appear as supporting
+ * context.  Hard multi-intent is raised only when both a crop-selection AND
+ * an independent weather/market question are clearly present in one message.
  */
-export const CROP_RECOMMENDATION_HINTS = [
+export const CROP_RECOMMENDATION_PATTERNS = [
+  // English — "which/what crop should/can I grow/plant/sow"
+  /\bwhich\s+crop\b/i,
+  /\bwhat\s+crop\b/i,
+  /\b(best|suitable|good|right|ideal)\s+crop\b/i,
+  /\bcrop\s+(to\s+)?(grow|plant|sow|cultivate|select|choose|pick|recommend|suggest)\b/i,
+  /\b(grow|plant|sow|cultivate)\s+(which|what)\s+crop\b/i,
+  /\bwhich\s+(kharif|rabi|zaid)\b/i,
+  /\b(kharif|rabi|zaid)\s+crop\s+(recommend|suggest|select|choose|best|suitable)\b/i,
+  /\b(recommend|suggest)\s+(a\s+)?(crop|fasal)\b/i,
+  /\bwhat\s+should\s+I\s+(grow|plant|sow|cultivate)\b/i,
+  /\bshould\s+I\s+(grow|plant|sow|cultivate)\b/i,
+  /\b(crop\s+recommendation|crop\s+selection|crop\s+suitability)\b/i,
+  /\bcompare\s+.{0,40}\s+(crop|crops)\b/i,
+  /\b(rice|wheat|maize|cotton|soybean|onion|tomato|potato)\s+(vs|versus|or)\s+(rice|wheat|maize|cotton|soybean|onion|tomato|potato)\b/i,
+  // Hindi/Hinglish
   /\b(konsi fasal|kaun si fasal|kya ugayein|kya lagayein)\b/i,
-  /\bfasal\s+(chune|batao|suggest|recommend)\b/i,
-  /\b(kharif|rabi|zaid)\s+(mein|ke liye)\s+(kaun|kya)\b/i,
-  /\u092b\u0938\u0932/u,  // फसल (Devanagari: fasal/crop)
+  /\bfasal\s+(chune|batao|suggest|recommend|kaun|kya|konsi)\b/i,
+  /\b(kharif|rabi|zaid)\s+(mein|ke liye|crop)\s+(kaun|kya|konsi|suggest|batao)\b/i,
+  /\u092b\u0938\u0932\s+\u0938\u0941\u091d\u093e\u0935/u,  // फसल सुझाव (fasal sujhav / crop suggestion)
+  /\u0915\u094c\u0928\s+\u092b\u0938\u0932/u,              // कौन फसल (kaun fasal / which crop)
 ]
 
 /**
+ * Crop recommendation hints — Hinglish/Hindi patterns.
+ * Exported for use in buildClassifierUserMessage to boost LLM confidence.
+ */
+export const CROP_RECOMMENDATION_HINTS = CROP_RECOMMENDATION_PATTERNS
+
+/**
  * Apply Layer 1 deterministic rules.
+ *
+ * Priority order (evaluated top-to-bottom; first match wins):
+ *   1. Crop + Weather/Market  → MULTI_INTENT  (crop question with live-data context)
+ *   2. Crop + Crop            → CROP_RECOMMENDATION
+ *   3. Weather + Market       → MULTI_INTENT  (two independent live-data questions)
+ *   4. Weather only           → WEATHER
+ *   5. Market only            → MARKET
+ *
+ * Crop is checked FIRST so that phrases like "which crop to grow given the
+ * weather forecast" are not hijacked by the WEATHER pattern matching "forecast".
  *
  * @param {string} message - Farmer message
  * @returns {object|null} Classifier result or null if no deterministic match
  */
 function applyDeterministicRules(message) {
+  const cropMatch    = CROP_RECOMMENDATION_PATTERNS.some((p) => p.test(message))
   const weatherMatch = WEATHER_PATTERNS.some((p) => p.test(message))
-  const marketMatch = MARKET_PATTERNS.some((p) => p.test(message))
+  const marketMatch  = MARKET_PATTERNS.some((p) => p.test(message))
+
+  // Crop + Weather → MULTI_INTENT (CropAgent will internally use WeatherAgent)
+  if (cropMatch && weatherMatch) {
+    return normalizeClassifierOutput({
+      primaryIntent: INTENT.MULTI_INTENT,
+      secondaryIntents: [INTENT.CROP_RECOMMENDATION, INTENT.WEATHER],
+      confidenceCategory: CONFIDENCE.HIGH,
+      missingInformation: [],
+      requiresLiveData: true,
+      requiresKnowledgeRetrieval: false,
+    })
+  }
+
+  // Crop + Market → MULTI_INTENT (CropAgent will internally use MarketAgent)
+  if (cropMatch && marketMatch) {
+    return normalizeClassifierOutput({
+      primaryIntent: INTENT.MULTI_INTENT,
+      secondaryIntents: [INTENT.CROP_RECOMMENDATION, INTENT.MARKET],
+      confidenceCategory: CONFIDENCE.HIGH,
+      missingInformation: [],
+      requiresLiveData: true,
+      requiresKnowledgeRetrieval: false,
+    })
+  }
+
+  // Crop alone → CROP_RECOMMENDATION
+  if (cropMatch) {
+    return normalizeClassifierOutput({
+      primaryIntent: INTENT.CROP_RECOMMENDATION,
+      secondaryIntents: [],
+      confidenceCategory: CONFIDENCE.HIGH,
+      missingInformation: [],
+      requiresLiveData: false,
+      requiresKnowledgeRetrieval: false,
+    })
+  }
 
   // Both weather + market → MULTI_INTENT
   if (weatherMatch && marketMatch) {

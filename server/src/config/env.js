@@ -144,7 +144,9 @@ const config = {
     // In-memory cache TTL in seconds (15 min default)
     cacheTtlSeconds: optionalInt('WEATHER_CACHE_TTL_SECONDS', 900),
     // HTTP request timeout in milliseconds
-    requestTimeoutMs: optionalInt('WEATHER_REQUEST_TIMEOUT_MS', 10000),
+    // Open-Meteo is normally <2s but Render egress latency can spike to 5-8s.
+    // 20s avoids spurious timeouts without hanging the user for too long.
+    requestTimeoutMs: optionalInt('WEATHER_REQUEST_TIMEOUT_MS', 20000),
   },
 
   // Populated in Phase 12 — Government Scheme Discovery Agent
