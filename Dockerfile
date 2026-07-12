@@ -57,8 +57,8 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
   CMD node -e "import('http').then(({default: h}) => h.get('http://localhost:5000/api/v1/health', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1)))"
 
 # Environment defaults (override with --env-file or -e flags)
-ENV NODE_ENV=production \
-    PORT=5000 \
+ENV NODE_ENV=production
+ENV PORT=5000
     # USE_MOCK_PROVIDERS=true
 
 # Start production server
