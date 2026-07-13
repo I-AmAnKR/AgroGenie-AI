@@ -451,6 +451,15 @@ async function fetchAgmarknetRecords({ commodity, state, district, market, fromD
   // ── Extract records ───────────────────────────────────────────────────
   const records = json.records ?? json.data ?? json.result ?? []
 
+  logger.info("DEBUG: First 5 commodities returned", {
+  commodities: records.slice(0, 5).map(r => ({
+    commodity: r.commodity,
+    market: r.market,
+    district: r.district,
+    state: r.state,
+  })),
+});
+
   if (!Array.isArray(records)) {
     logger.warn('MarketProvider: unexpected response shape — no records array', {
       responseKeys: Object.keys(json).join(', '),
