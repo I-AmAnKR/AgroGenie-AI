@@ -39,6 +39,9 @@ export default function Weather() {
   )
 ])
       console.log("Weather Response:", w);
+      console.log("Forecast Response:", f);
+      console.log("Advice Response:", i);
+      
       setWeather(w.data.current)
       setForecast(f.data.forecast)
       setImpacts(i.data.impacts)
@@ -147,7 +150,7 @@ export default function Weather() {
         </div>
         <div className="card-body forecast-row">
           {forecast.map(day => (
-            <div key={day.date} className={`forecast-card ${day.rainProb > 60 ? 'forecast-card-rain' : ''}`}>
+            <div key={day.date} className={`forecast-card ${day.precipitationProbabilityPercent  > 60 ? 'forecast-card-rain' : ''}`}>
               <p className="forecast-card-day">{new Date(day.date).toLocaleDateString('en-IN', {
   weekday: 'short'
 })}</p>
