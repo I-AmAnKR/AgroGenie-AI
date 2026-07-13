@@ -336,8 +336,8 @@ async function fetchAgmarknetRecords({ commodity, state, district, market, fromD
   const requestLimit = Math.min(limit ?? maxRecords, maxRecords)
 
   // ── Build URL ────────────────────────────────────────────────────────
-  // const qs = buildQueryString({ apiKey, limit: requestLimit, commodity, state, district, market, fromDate })
- const qs =`api-version=2.0&format=json&limit=5&offset=0&api-key=${encodeURIComponent(apiKey)}` 
+  const qs = buildQueryString({ apiKey, limit: requestLimit, commodity, state, district, market, fromDate })
+//  const qs =`api-version=2.0&format=json&limit=5&offset=0&api-key=${encodeURIComponent(apiKey)}` 
   const url = `${apiUrl}/${resourceId}?${qs}`
 
   // Log the full URL with the API key redacted for security
@@ -508,9 +508,35 @@ export const realMarketProvider = {
    */
   async getPrices({ commodity, state, district, market, fromDate, toDate, limit } = {}) {
     const fetchedAt = new Date().toISOString()
-    const rawRecords = await fetchAgmarknetRecords({
+    let rawRecords = await fetchAgmarknetRecords({
       commodity, state, district, market, fromDate, toDate, limit,
     })
+
+    // Retry 1: remove district filter
+    if (rawRecords.length === 0 && district) {
+      logger.info("Retrying without district filter");
+
+      rawRecords = await fetchAgmarknetRecords({
+      commodity,
+      state,
+      market,
+      fromDate,
+      toDate,
+      limit,
+    });
+    }
+
+  // Retry 2: remove state filter
+    if (rawRecords.length === 0 && state) {
+      logger.info("Retrying with commodity only");
+
+    rawRecords = await fetchAgmarknetRecords({
+      commodity,
+      fromDate,
+      toDate,
+      limit,
+    });
+  }
 
     const providerMeta = { provider: 'agmarknet-datagov', fetchedAt, isDemo: false }
     const records = normalizeAgmarknetRecords(rawRecords, providerMeta)
