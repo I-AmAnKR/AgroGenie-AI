@@ -163,14 +163,19 @@ export default function Disease() {
 
           {result && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {result.status === 'capability_not_available' && (
+                <div style={{ background: 'var(--color-info-bg)', border: '1px solid var(--color-info)', borderRadius: 8, padding: '12px 14px', marginBottom: 12 }}>
+                  <p style={{ fontSize: '0.875rem', color: 'var(--color-info-text)' }}>{result.message}</p>
+                </div>
+              )}
               {/* Condition */}
               <div className="card">
                 <div className="card-body disease-condition-row">
                   <div>
                     <p className="text-xs text-muted" style={{ marginBottom: 4 }}>Possible Condition</p>
-                    <h2 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: 8 }}>{result.condition}</h2>
+                    <h2 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: 8 }}>{result.condition ?? 'Diagnosis Not Available'}</h2>
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                      <ConfidenceBadge confidence={result.confidence} />
+                      <ConfidenceBadge confidence={result.confidence ?? 'N/A'} />
                       <DemoDataBadge label="Demo Analysis" />
                     </div>
                   </div>
@@ -182,9 +187,13 @@ export default function Disease() {
                 <div className="card-header"><h3 style={{ margin: 0, fontSize: '0.9375rem' }}>Observed Symptom Patterns</h3></div>
                 <div className="card-body">
                   <ul style={{ paddingLeft: 16, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    {result.observedSymptoms.map((s, i) => (
-                      <li key={i} style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', listStyle: 'disc' }}>{s}</li>
-                    ))}
+                    {(result.observedSymptoms ?? []).length === 0 ? (
+                      <li style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', listStyle: 'none', marginLeft: -16 }}>No symptoms identified.</li>
+                    ) : (
+                      (result.observedSymptoms ?? []).map((s, i) => (
+                        <li key={i} style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', listStyle: 'disc' }}>{s}</li>
+                      ))
+                    )}
                   </ul>
                 </div>
               </div>
@@ -193,12 +202,16 @@ export default function Disease() {
               <div className="card">
                 <div className="card-header"><h3 style={{ margin: 0, fontSize: '0.9375rem' }}>Recommended Next Checks</h3></div>
                 <div className="card-body">
-                  {result.recommendedChecks.map((c, i) => (
-                    <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: i < result.recommendedChecks.length - 1 ? 10 : 0 }}>
-                      <CheckCircle size={15} color="var(--color-info)" style={{ flexShrink: 0, marginTop: 2 }} aria-hidden="true" />
-                      <p className="text-sm text-secondary">{c}</p>
-                    </div>
-                  ))}
+                  {(result.recommendedChecks ?? []).length === 0 ? (
+                    <p className="text-sm text-secondary">No recommendations available.</p>
+                  ) : (
+                    (result.recommendedChecks ?? []).map((c, i) => (
+                      <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: i < (result.recommendedChecks ?? []).length - 1 ? 10 : 0 }}>
+                        <CheckCircle size={15} color="var(--color-info)" style={{ flexShrink: 0, marginTop: 2 }} aria-hidden="true" />
+                        <p className="text-sm text-secondary">{c}</p>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
 
@@ -207,9 +220,13 @@ export default function Disease() {
                 <div className="card-header"><h3 style={{ margin: 0, fontSize: '0.9375rem' }}>General Prevention Guidance</h3></div>
                 <div className="card-body">
                   <ul style={{ paddingLeft: 16, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    {result.generalPrevention.map((p, i) => (
-                      <li key={i} style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', listStyle: 'disc' }}>{p}</li>
-                    ))}
+                    {(result.generalPrevention ?? []).length === 0 ? (
+                      <li style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', listStyle: 'none', marginLeft: -16 }}>No prevention guidance available.</li>
+                    ) : (
+                      (result.generalPrevention ?? []).map((p, i) => (
+                        <li key={i} style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', listStyle: 'disc' }}>{p}</li>
+                      ))
+                    )}
                   </ul>
                 </div>
               </div>
@@ -220,7 +237,7 @@ export default function Disease() {
                   <Phone size={16} color="var(--color-primary)" aria-hidden="true" style={{ flexShrink: 0, marginTop: 2 }} />
                   <div>
                     <p style={{ fontWeight: 700, fontSize: '0.9rem', marginBottom: 4 }}>When to Contact an Agriculture Expert</p>
-                    <p className="text-sm text-secondary">{result.whenToContactExpert}</p>
+                    <p className="text-sm text-secondary">{result.whenToContactExpert ?? 'Consult an agronomist if symptoms persist or spread.'}</p>
                   </div>
                 </div>
               </div>
@@ -229,14 +246,20 @@ export default function Disease() {
               <div className="card">
                 <div className="card-header"><h3 style={{ margin: 0, fontSize: '0.9375rem' }}>Information Sources</h3></div>
                 <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {result.sources.map((s, i) => <SourceCard key={i} source={s} />)}
+                  {(result.sources ?? []).length === 0 ? (
+                    <p className="text-sm text-secondary">No sources cited.</p>
+                  ) : (
+                    (result.sources ?? []).map((s, i) => <SourceCard key={i} source={s} />)
+                  )}
                 </div>
               </div>
 
               {/* Disclaimer */}
               <div style={{ background: 'var(--color-warning-bg)', border: '1px solid #fcd34d', borderRadius: 8, padding: '12px 14px', display: 'flex', gap: 8, alignItems: 'flex-start' }}>
                 <AlertTriangle size={15} color="var(--color-warning)" style={{ flexShrink: 0, marginTop: 2 }} aria-hidden="true" />
-                <p style={{ fontSize: '0.8125rem', color: '#92400e', lineHeight: 1.5 }}>{result.disclaimer}</p>
+                <p style={{ fontSize: '0.8125rem', color: '#92400e', lineHeight: 1.5 }}>
+                  {result.disclaimer ?? 'This is a general advisory and does not replace professional agronomic diagnosis. Do not use pesticide applications without verifying with a local agricultural extension officer.'}
+                </p>
               </div>
             </div>
           )}

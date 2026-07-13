@@ -46,7 +46,7 @@ function SchemeCard({ scheme }) {
           <div className="scheme-section">
             <p className="scheme-section-label">Key Eligibility Conditions</p>
             <ul style={{ paddingLeft: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
-              {scheme.eligibility.map((e, i) => (
+              {(scheme.eligibility ?? []).map((e, i) => (
                 <li key={i} style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', listStyle: 'disc' }}>
                   {e}
                 </li>
@@ -56,7 +56,7 @@ function SchemeCard({ scheme }) {
           <div className="scheme-section">
             <p className="scheme-section-label">Required Documents</p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {scheme.documents.map((d, i) => (
+              {(scheme.documents ?? []).map((d, i) => (
                 <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'var(--color-surface-2)', border: '1px solid var(--color-border)', borderRadius: 20, padding: '3px 10px', fontSize: '0.8125rem' }}>
                   <FileText size={11} aria-hidden="true" />
                   {d}
@@ -89,7 +89,10 @@ export default function Schemes() {
     setLoading(true)
     try {
       const res = await searchSchemes(q, cat)
-      setSchemes(res.data.schemes)
+      setSchemes(Array.isArray(res?.data?.schemes) ? res.data.schemes : (Array.isArray(res?.data) ? res.data : []))
+    } catch (err) {
+      console.error(err)
+      setSchemes([])
     } finally {
       setLoading(false)
     }
@@ -152,7 +155,7 @@ export default function Schemes() {
 
       {/* Results */}
       {loading ? <LoadingSpinner fullPage text="Searching schemes..." /> : (
-        schemes.length === 0 ? (
+        (!schemes || schemes.length === 0) ? (
           <EmptyState
             icon={BookOpen}
             title="No matching schemes"
@@ -161,7 +164,7 @@ export default function Schemes() {
         ) : (
           <div className="schemes-list">
             <p className="text-sm text-muted" style={{ marginBottom: 10 }}>{schemes.length} scheme(s) found · Demo data</p>
-            {schemes.map(s => <SchemeCard key={s.id} scheme={s} />)}
+            {schemes.map((s, idx) => <SchemeCard key={s.id ?? idx} scheme={s} />)}
           </div>
         )
       )}
