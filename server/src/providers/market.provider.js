@@ -336,7 +336,8 @@ async function fetchAgmarknetRecords({ commodity, state, district, market, fromD
   const requestLimit = Math.min(limit ?? maxRecords, maxRecords)
 
   // ── Build URL ────────────────────────────────────────────────────────
-  const qs = buildQueryString({ apiKey, limit: requestLimit, commodity, state, district, market, fromDate })
+  // const qs = buildQueryString({ apiKey, limit: requestLimit, commodity, state, district, market, fromDate })
+ const qs =`api-version=2.0&format=json&limit=5&offset=0&api-key=${encodeURIComponent(apiKey)}` 
   const url = `${apiUrl}/${resourceId}?${qs}`
 
   // Log the full URL with the API key redacted for security
