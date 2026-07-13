@@ -30,23 +30,20 @@ export default function Weather() {
     try {
       const coords = profile?.location?.coordinates ?? { lat: 19.847, lon: 73.998 }
       const [w, f, i] = await Promise.all([
-  getCurrentWeather(coords.lat, coords.lon),
-  getForecast(coords.lat, coords.lon),
-  getFarmingImpact(
-    coords.lat,
-    coords.lon,
-    profile?.currentCrop
-  )
-])
+        getCurrentWeather(coords.lat, coords.lon),
+        getForecast(coords.lat, coords.lon),
+        getFarmingImpact(coords.lat, coords.lon, profile?.currentCrop)
+      ])
       console.log("Weather Response:", w);
       console.log("Forecast Response:", f);
       console.log("Advice Response:", i);
       
-      setWeather(w.data.current)
-      setForecast(f.data.forecast)
-      setImpacts(i.data.impacts)
-      setAlerts(i.data.alerts)
-    } catch {
+      setWeather(w?.data?.current ?? null)
+      setForecast(Array.isArray(f?.data) ? f.data : f?.data?.forecast ?? [])
+      setImpacts(i?.data?.impacts ?? [])
+      setAlerts(i?.data?.alerts ?? [])
+    } catch (err) {
+      console.error(err)
       setError('Unable to load weather data.')
     } finally {
       setLoading(false)
@@ -81,7 +78,7 @@ export default function Weather() {
       </div>
 
       {/* Weather alerts */}
-      {alerts.map(alert => (
+      {alerts?.map(alert => (
         <div key={alert.id} className="weather-alert">
           <AlertTriangle size={16} color="var(--color-warning)" aria-hidden="true" />
           <div>
@@ -97,7 +94,7 @@ export default function Weather() {
         <div className="card-body weather-current-inner">
           <div className="weather-main">
             <span className="weather-big-icon" aria-hidden="true">
-              {conditionIcons[weather?.condition?.toLowerCase()] ?? "🌤"}
+              {conditionIcons[typeof weather?.condition === 'string' ? weather.condition.toLowerCase() : ''] ?? "🌤"}
             </span>
             <div>
               <div className="weather-temp">{weather?.temperatureC}°C</div>
@@ -149,7 +146,7 @@ export default function Weather() {
           <DemoDataBadge />
         </div>
         <div className="card-body forecast-row">
-          {forecast.map(day => (
+          {forecast?.map(day => (
             <div key={day.date} className={`forecast-card ${day.precipitationProbabilityPercent  > 60 ? 'forecast-card-rain' : ''}`}>
               <p className="forecast-card-day">{new Date(day.date).toLocaleDateString('en-IN', {
   weekday: 'short'
@@ -172,7 +169,7 @@ export default function Weather() {
           <DemoDataBadge label="AI Analysis (Demo)" />
         </div>
         <div className="card-body impact-grid">
-          {impacts.map(impact => {
+          {impacts?.map(impact => {
             const Icon = impactStatusIcon[impact.status] ?? MinusCircle
             const color = impactStatusColor[impact.status] ?? 'var(--color-text-muted)'
             return (

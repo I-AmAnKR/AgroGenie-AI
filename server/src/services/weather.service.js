@@ -18,17 +18,17 @@ export async function getWeather(params = {}) {
   let data;
 
   if (params.lat && params.lon) {
-  data = await provider.getCurrentWeather({
-    latitude: Number(params.lat),
-    longitude: Number(params.lon),
-    locationName: params.location ?? "Current Location",
-  });
-} else {
-  data = await provider.getWeatherByLocation({
-    district: params.district ?? params.location ?? null,
-    state: params.state ?? null,
-  });
-}
+    data = await provider.getCurrentWeather({
+      latitude: Number(params.lat),
+      longitude: Number(params.lon),
+      locationName: typeof params.location === 'string' ? params.location : "Current Location",
+    });
+  } else {
+    data = await provider.getWeatherByLocation({
+      district: typeof params.district === 'string' ? params.district : (typeof params.location === 'string' ? params.location : null),
+      state: typeof params.state === 'string' ? params.state : null,
+    });
+  }
   // Return shape compatible with legacy controller/test expectations
   // Include both `metadata` (new) and `source` (legacy alias) for backward compat
   return {
@@ -52,12 +52,19 @@ export async function getWeather(params = {}) {
 export async function getFarmingAdvice(params = {}) {
   const provider = getWeatherProvider()
 
-  const data = await provider.getWeatherByLocation({
-    lat: params.lat,
-    lon: params.lon,
-    district: params.district ?? params.location ?? null,
-    state: params.state ?? null,
-  })
+  let data;
+  if (params.lat && params.lon) {
+    data = await provider.getCurrentWeather({
+      latitude: Number(params.lat),
+      longitude: Number(params.lon),
+      locationName: typeof params.location === 'string' ? params.location : "Current Location",
+    });
+  } else {
+    data = await provider.getWeatherByLocation({
+      district: typeof params.district === 'string' ? params.district : (typeof params.location === 'string' ? params.location : null),
+      state: typeof params.state === 'string' ? params.state : null,
+    });
+  }
 
   return {
     location: data.location,
