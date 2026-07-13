@@ -39,8 +39,8 @@ export default function Weather() {
   )
 ])
       console.log("Weather Response:", w);
-      setWeather(w.data)
-      setForecast(f.data)
+      setWeather(w.data.current)
+      setForecast(f.data.forecast)
       setImpacts(i.data.impacts)
       setAlerts(i.data.alerts)
     } catch {
@@ -94,12 +94,12 @@ export default function Weather() {
         <div className="card-body weather-current-inner">
           <div className="weather-main">
             <span className="weather-big-icon" aria-hidden="true">
-              {conditionIcons[weather?.conditionCode] ?? '🌤'}
+              {conditionIcons[weather?.condition?.toLowerCase()] ?? "🌤"}
             </span>
             <div>
-              <div className="weather-temp">{weather?.temp}°C</div>
+              <div className="weather-temp">{weather?.temperatureC}°C</div>
               <p className="weather-condition">{weather?.condition}</p>
-              <p className="text-muted text-sm">Feels like {weather?.feelsLike}°C</p>
+              <p className="text-muted text-sm">Feels like {weather?.feelsLikeC}°C</p>
             </div>
           </div>
           <div className="weather-grid">
@@ -107,28 +107,32 @@ export default function Weather() {
               <Droplets size={18} color="var(--color-info)" aria-hidden="true" />
               <div>
                 <p className="weather-metric-label">Humidity</p>
-                <p className="weather-metric-value">{weather?.humidity}%</p>
+                <p className="weather-metric-value">{weather?.humidityPercent}%</p>
               </div>
             </div>
             <div className="weather-metric">
               <Wind size={18} color="var(--color-text-muted)" aria-hidden="true" />
               <div>
                 <p className="weather-metric-label">Wind</p>
-                <p className="weather-metric-value">{weather?.windSpeed} km/h {weather?.windDirection}</p>
+                <p className="weather-metric-value">{weather?.windSpeedKph} km/h {weather?.windDirection}</p>
               </div>
             </div>
             <div className="weather-metric">
               <CloudSun size={18} color="var(--color-warning)" aria-hidden="true" />
               <div>
-                <p className="weather-metric-label">Rain Probability</p>
-                <p className="weather-metric-value">{weather?.rainProbability}%</p>
+                <p className="weather-metric-label">Rain Today</p>
+                <p className="weather-metric-value">
+                    {forecast?.[0]?.precipitationProbabilityPercent ?? 0}%
+                </p>
               </div>
             </div>
             <div className="weather-metric">
               <Eye size={18} color="var(--color-text-muted)" aria-hidden="true" />
               <div>
-                <p className="weather-metric-label">Visibility</p>
-                <p className="weather-metric-value">{weather?.visibility} km</p>
+                <p className="weather-metric-label">Rainfall</p>
+                  <p className="weather-metric-value">
+                    {weather?.precipitationMm ?? 0} mm
+                  </p>
               </div>
             </div>
           </div>
@@ -144,13 +148,15 @@ export default function Weather() {
         <div className="card-body forecast-row">
           {forecast.map(day => (
             <div key={day.date} className={`forecast-card ${day.rainProb > 60 ? 'forecast-card-rain' : ''}`}>
-              <p className="forecast-card-day">{day.day}</p>
+              <p className="forecast-card-day">{new Date(day.date).toLocaleDateString('en-IN', {
+  weekday: 'short'
+})}</p>
               <span className="forecast-card-icon" aria-hidden="true">{conditionIcons[day.conditionCode] ?? '🌤'}</span>
               <div className="forecast-card-temps">
-                <span className="forecast-hi">{day.tempMax}°</span>
-                <span className="forecast-lo">{day.tempMin}°</span>
+                <span className="forecast-hi">{day.maxTemperatureC}°</span>
+                <span className="forecast-lo">{day.minTemperatureC}°</span>
               </div>
-              <p className="forecast-card-rain">{day.rainProb}% rain</p>
+              <p className="forecast-card-rain">{day.precipitationProbabilityPercent}% rain</p>
             </div>
           ))}
         </div>
