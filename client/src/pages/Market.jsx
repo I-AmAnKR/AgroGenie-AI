@@ -11,8 +11,8 @@ import EmptyState from '../components/common/EmptyState.jsx'
 import './Market.css'
 
 function TrendBadge({ trend, pct }) {
-  if (trend === 'up') return <span className="trend-badge trend-up"><TrendingUp size={12} /> +{pct}%</span>
-  if (trend === 'down') return <span className="trend-badge trend-down"><TrendingDown size={12} /> {pct}%</span>
+  if (trend === 'up') return <span className="trend-badge trend-up"><TrendingUp size={12} /> +{pct ?? 0}%</span>
+  if (trend === 'down') return <span className="trend-badge trend-down"><TrendingDown size={12} /> {pct ?? 0}%</span>
   return <span className="trend-badge trend-stable"><Minus size={12} /> Stable</span>
 }
 
@@ -30,10 +30,34 @@ export default function Market() {
         getPrices(filters),
         getPriceTrend(filters.commodity, filters.market || 'Lasalgaon')
       ])
-      setPrices(p.data.prices)
-      setFetchedAt(p.data.source?.lastUpdated ?? p.data.fetchedAt ?? null)
-      // Backend returns records; frontend mock returned trend — support both
-      setTrend(t.data.records ?? t.data.trend ?? [])
+
+      console.log("Prices Response:", p)
+      console.log("Trend Response:", t)
+
+      setPrices(
+        Array.isArray(p?.data?.records)
+          ? p.data.records
+          : Array.isArray(p?.data) ? p.data : []
+      )
+
+      setFetchedAt(
+        p?.data?.fetchedAt ??
+        p?.data?.metadata?.fetchedAt ??
+        p?.data?.source?.lastUpdated ??
+        null
+      )
+
+      setTrend(
+        Array.isArray(t?.data?.trend)
+          ? t.data.trend
+          : Array.isArray(t?.data?.records)
+            ? t.data.records
+            : Array.isArray(t?.data) ? t.data : []
+      )
+    } catch (err) {
+      console.error(err)
+      setPrices([])
+      setTrend([])
     } finally {
       setLoading(false)
     }
@@ -46,7 +70,18 @@ export default function Market() {
 
   const setF = (field, value) => setFilters(prev => ({ ...prev, [field]: value }))
 
-  const topPrice = prices[0]
+  const topPrice = prices?.[0] ?? null
+
+  const formatPrice = (val) => {
+    if (val == null || isNaN(val)) return 'N/A'
+    return val.toLocaleString('en-IN')
+  }
+
+  const formatUnit = (unit) => {
+    if (unit === 'INR_PER_QUINTAL') return '₹/quintal'
+    if (unit === 'INR_PER_KG') return '₹/kg'
+    return unit ?? ''
+  }
 
   return (
     <div>
@@ -62,14 +97,14 @@ export default function Market() {
           <div className="form-group" style={{ minWidth: 160 }}>
             <label className="form-label" htmlFor="commodity">Commodity</label>
             <select id="commodity" className="form-control" value={filters.commodity} onChange={e => setF('commodity', e.target.value)}>
-              {mockCommodities.map(c => <option key={c}>{c}</option>)}
+              {mockCommodities?.map(c => <option key={c}>{c}</option>)}
             </select>
           </div>
           <div className="form-group" style={{ minWidth: 160 }}>
             <label className="form-label" htmlFor="mstate">State</label>
             <select id="mstate" className="form-control" value={filters.state} onChange={e => setF('state', e.target.value)}>
               <option value="">All States</option>
-              {mockStates.map(s => <option key={s}>{s}</option>)}
+              {mockStates?.map(s => <option key={s}>{s}</option>)}
             </select>
           </div>
           <div className="form-group" style={{ minWidth: 140 }}>
@@ -94,8 +129,8 @@ export default function Market() {
                 <div className="card-body market-highlight-inner">
                   <div>
                     <p className="market-highlight-label">{filters.commodity} — {topPrice.market}</p>
-                    <p className="market-highlight-value">₹{topPrice.modalPrice.toLocaleString('en-IN')}</p>
-                    <p className="text-sm text-muted">{topPrice.unit}</p>
+                    <p className="market-highlight-value">₹{formatPrice(topPrice.modalPrice)}</p>
+                    <p className="text-sm text-muted">{formatUnit(topPrice.unit)}</p>
                   </div>
                   <div>
                     <TrendBadge trend={topPrice.trend} pct={topPrice.trendPct} />
@@ -110,7 +145,7 @@ export default function Market() {
                     {filters.commodity} prices in {filters.state || 'Maharashtra'} have shown a moderate upward movement over the past week.
                     Prices remain within the seasonal range. This observation is based on available market data and does not constitute a trading recommendation.
                   </p>
-                  {fetchedAt && <div style={{ marginTop: 10 }}><FreshnessIndicator timestamp={fetchedAt} source="Agmarknet (Demo)" /></div>}
+                  {fetchedAt && <div style={{ marginTop: 10 }}><FreshnessIndicator timestamp={fetchedAt} source="Agmarknet (Real-Time)" /></div>}
                 </div>
               </div>
             </div>
@@ -126,7 +161,7 @@ export default function Market() {
             </div>
             <div className="card-body">
               <ResponsiveContainer width="100%" height={200}>
-                <AreaChart data={trend} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                <AreaChart data={trend ?? []} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="mktGrad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.15} />
@@ -148,7 +183,7 @@ export default function Market() {
             <div className="card-header">
               <h2 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>Nearby Market Comparison</h2>
             </div>
-            {prices.length === 0 ? (
+            {!prices || prices.length === 0 ? (
               <EmptyState title="No prices found" message="Try adjusting your filters." />
             ) : (
               <div className="table-wrapper" style={{ border: 'none', borderRadius: 0 }}>
@@ -165,15 +200,15 @@ export default function Market() {
                     </tr>
                   </thead>
                   <tbody>
-                    {prices.map(p => (
-                      <tr key={p.id}>
+                    {prices.map((p, idx) => (
+                      <tr key={p.id ?? idx}>
                         <td style={{ fontWeight: 600 }}>{p.market}</td>
                         <td>{p.district}</td>
-                        <td>{p.minPrice.toLocaleString('en-IN')}</td>
-                        <td>{p.maxPrice.toLocaleString('en-IN')}</td>
-                        <td style={{ fontWeight: 700 }}>{p.modalPrice.toLocaleString('en-IN')}</td>
+                        <td>{formatPrice(p.minPrice)}</td>
+                        <td>{formatPrice(p.maxPrice)}</td>
+                        <td style={{ fontWeight: 700 }}>{formatPrice(p.modalPrice)}</td>
                         <td><TrendBadge trend={p.trend} pct={p.trendPct} /></td>
-                        <td>{p.date}</td>
+                        <td>{p.priceDate ?? p.date ?? 'N/A'}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -183,7 +218,7 @@ export default function Market() {
             <div className="card-footer">
               <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
                 Price data shown is for planning reference only. Do not make financial decisions based solely on this demonstration data.
-                Actual prices vary. Source: Agmarknet (Demo Mode).
+                Actual prices vary. Source: Agmarknet (Real-Time).
               </p>
             </div>
           </div>
