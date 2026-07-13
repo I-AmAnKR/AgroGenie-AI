@@ -129,8 +129,10 @@ export default function Chat() {
 
       // Merge agent metadata into message for display
       const assistantMsg = {
-        ...data.message,
         id: data.message?.id ?? `a-${Date.now()}`,
+        role: data.message?.role ?? 'assistant',
+        content: data.message?.content ?? '',
+        timestamp: data.message?.timestamp ?? new Date().toISOString(),
         sources: data.sources ?? [],
         provider: data.provider,
         isDemo: data.isDemo,
@@ -150,11 +152,14 @@ export default function Chat() {
         disease: data.disease ?? null,
       }
       setMessages(prev => [...prev, assistantMsg])
-    } catch {
+    } catch (err) {
+      // Use the backend error message if available, otherwise fallback to generic message
+      const errorMsg = err?.error?.message || err?.message || 'Sorry, I was unable to process your request. Please try again.'
+      
       setMessages(prev => [...prev, {
         id: `err-${Date.now()}`,
         role: 'assistant',
-        content: 'Sorry, I was unable to process your request. Please try again.',
+        content: errorMsg,
         timestamp: new Date().toISOString(),
         sources: [],
         agentChain: [],
