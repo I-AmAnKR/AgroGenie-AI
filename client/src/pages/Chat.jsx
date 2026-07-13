@@ -105,12 +105,12 @@ export default function Chat() {
       // Upload image if present
       if (currentAttachment) {
         const uploadRes = await uploadImage(currentAttachment)
-        if (uploadRes?.data?.objectKey) {
+        if (uploadRes?.data?.metadata?.objectKey) {
           attachmentsPayload.push({
-            type: 'image',
-            objectKey: uploadRes.data.objectKey,
-            mimeType: currentAttachment.type
-          })
+          type: "image",
+          objectKey: uploadRes.data.metadata.objectKey,
+          mimeType: currentAttachment.type,
+          });
         }
       }
 
