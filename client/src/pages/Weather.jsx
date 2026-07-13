@@ -30,10 +30,14 @@ export default function Weather() {
     try {
       const coords = profile?.location?.coordinates ?? { lat: 19.847, lon: 73.998 }
       const [w, f, i] = await Promise.all([
-        getCurrentWeather(coords.lat, coords.lon),
-        getForecast(coords.lat, coords.lon),
-        getFarmingImpact(coords.lat, coords.lon, profile?.farm?.currentCrop)
-      ])
+  getCurrentWeather(coords.lat, coords.lon),
+  getForecast(coords.lat, coords.lon),
+  getFarmingImpact(
+    profile?.district,
+    profile?.state,
+    profile?.currentCrop
+  )
+])
       setWeather(w.data)
       setForecast(f.data)
       setImpacts(i.data.impacts)

@@ -28,6 +28,10 @@ export async function getForecast(_lat, _lon) {
  * POST /api/v1/weather/advice
  * Get farming impact advice.
  */
-export async function getFarmingImpact(lat, lon, crop) {
-  return axiosClient.post('/weather/advice', { lat, lon, crop })
+export async function getFarmingImpact(district, state, crop) {
+  return axiosClient.post('/weather/advice', {
+    district,
+    state,
+    crop,
+  })
 }
