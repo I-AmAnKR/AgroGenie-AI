@@ -80,11 +80,7 @@ export default function Dashboard() {
                 : f?.data?.forecast ?? []
         )
 
-        setPrices(
-            Array.isArray(p?.data)
-                ? p.data
-                : p?.data?.prices ?? []
-        )
+        setPrices(p?.data?.records ?? [])
 
         setPriceTrend(pt?.data?.trend ?? [])
       } finally {
@@ -138,23 +134,17 @@ export default function Dashboard() {
           color="var(--color-primary)"
         />
         <StatCard
-          title="Market Watch"
-          value={
-            topPrice?.modalPrice != null
-              ? `₹${topPrice.modalPrice.toLocaleString("en-IN")}`
-              : "—"
-          }
-          unit="/quintal"
-          icon={TrendingUp}
-          trend={false}
-          trendLabel=""
-          subtitle={
-            topPrice
-              ? `${topPrice.commodity} • ${topPrice.market}`
-              : "No market data"
-          }
-          color="var(--color-accent-dark)"
-        />
+    title="Market Watch"
+    value={topPrice ? `₹${topPrice.modalPrice.toLocaleString('en-IN')}` : '—'}
+    unit="/quintal"
+    icon={TrendingUp}
+    subtitle={
+        topPrice
+            ? `${topPrice.commodity} • ${topPrice.market}`
+            : 'No market data'
+    }
+    color="var(--color-accent-dark)"
+/>
         <div className="alert-card card">
           <div className="card-body alert-card-inner">
             <div className="alert-icon">
