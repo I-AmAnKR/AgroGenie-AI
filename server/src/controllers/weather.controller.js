@@ -8,7 +8,16 @@ export async function weather(req, res) {
 }
 
 export async function weatherAdvice(req, res) {
-  const { location, district, state, crop } = req.body
-  const result = await getFarmingAdvice({ location, district, state, crop })
+  const { location, district, state, lat, lon, crop } = req.body
+
+  const result = await getFarmingAdvice({
+    location,
+    district,
+    state,
+    lat,
+    lon,
+    crop
+  })
+
   return success(res, result)
 }

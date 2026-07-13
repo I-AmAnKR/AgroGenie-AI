@@ -33,8 +33,8 @@ export default function Weather() {
   getCurrentWeather(coords.lat, coords.lon),
   getForecast(coords.lat, coords.lon),
   getFarmingImpact(
-    profile?.district,
-    profile?.state,
+    coords.lat,
+    coords.lon,
     profile?.currentCrop
   )
 ])

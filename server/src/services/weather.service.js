@@ -51,11 +51,14 @@ export async function getWeather(params = {}) {
  */
 export async function getFarmingAdvice(params = {}) {
   const provider = getWeatherProvider()
+
   const data = await provider.getWeatherByLocation({
+    lat: params.lat,
+    lon: params.lon,
     district: params.district ?? params.location ?? null,
     state: params.state ?? null,
   })
-  // Return simplified farming impact summary
+
   return {
     location: data.location,
     impacts: [],
