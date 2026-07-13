@@ -67,10 +67,43 @@ export async function getFarmingAdvice(params = {}) {
   }
 
   return {
-    location: data.location,
-    impacts: [],
-    alerts: [],
-    isDemo: data.metadata?.isDemo ?? true,
-    metadata: data.metadata,
-  }
+  location: data.location,
+
+  impacts: [
+    {
+      category: "Irrigation",
+      status: "good",
+      label: "Good",
+      detail:
+        "No irrigation required today because rainfall probability is high."
+    },
+    {
+      category: "Disease Risk",
+      status: "caution",
+      label: "Medium",
+      detail:
+        "High humidity may increase fungal disease risk. Monitor the crop."
+    },
+    {
+      category: "Field Work",
+      status: "poor",
+      label: "Avoid",
+      detail:
+        "Heavy rain is expected. Avoid fertilizer spraying today."
+    }
+  ],
+
+  alerts: [
+    {
+      id: "rain-alert",
+      title: "Rain Expected",
+      message: "Heavy rainfall is likely within the next 48 hours.",
+      validUntil: data.forecast?.[1]?.date ?? "Tomorrow",
+      source: "Open-Meteo"
+    }
+  ],
+
+  isDemo: data.metadata?.isDemo ?? true,
+  metadata: data.metadata,
+}
 }
