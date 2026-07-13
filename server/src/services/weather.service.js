@@ -10,15 +10,25 @@
 import { getWeatherProvider } from '../providers/weather.provider.factory.js'
 
 /**
- * Get current weather and forecast for a location.
- * @param {object} params - { location, district, state }
+ * @param {object} params
+ * { location, district, state, lat, lon }
  */
 export async function getWeather(params = {}) {
   const provider = getWeatherProvider()
-  const data = await provider.getWeatherByLocation({
+  let data;
+
+  if (params.lat && params.lon) {
+  data = await provider.getCurrentWeather({
+    latitude: Number(params.lat),
+    longitude: Number(params.lon),
+    locationName: params.location ?? "Current Location",
+  });
+} else {
+  data = await provider.getWeatherByLocation({
     district: params.district ?? params.location ?? null,
     state: params.state ?? null,
-  })
+  });
+}
   // Return shape compatible with legacy controller/test expectations
   // Include both `metadata` (new) and `source` (legacy alias) for backward compat
   return {
