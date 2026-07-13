@@ -433,7 +433,7 @@ function DocumentDetail({ documentId, onClose, onDelete, onProcessed }) {
               {doc.documentDate && <div className="kb-meta-row"><span className="kb-meta-key">Doc Date</span><span className="kb-meta-val">{doc.documentDate}</span></div>}
               {doc.tags?.length > 0 && (
                 <div className="kb-meta-row"><span className="kb-meta-key">Tags</span>
-                  <span className="kb-meta-val kb-tags">{doc.tags.map((t) => <span key={t} className="kb-tag">{t}</span>)}</span>
+                  <span className="kb-meta-val kb-tags">{(doc.tags ?? []).map((t) => <span key={t} className="kb-tag">{t}</span>)}</span>
                 </div>
               )}
               {doc.sourceUrl && (
@@ -520,7 +520,7 @@ function DocumentTable({ documents, pagination, onPageChange, onRowClick, onDele
           </tr>
         </thead>
         <tbody>
-          {documents.map((doc) => (
+          {(documents ?? []).map((doc) => (
             <tr key={doc.documentId} className="kb-table-row" onClick={() => onRowClick(doc.documentId)}>
               <td className="kb-td-title">
                 <span className="kb-doc-icon">{doc.mimeType === 'application/pdf' ? '📕' : '📝'}</span>
@@ -744,16 +744,16 @@ function RagTestConsole() {
             <h3 className="rag-results-title">Search Results</h3>
             <span className="rag-results-meta">{searchResults.resultCount} result(s) · topK={searchResults.topK} · minScore={searchResults.minScore}</span>
           </div>
-          {searchResults.results.length === 0 ? (
+          {(searchResults.results ?? []).length === 0 ? (
             <div className="kb-alert kb-alert--info">No chunks above the relevance threshold. Try a different query or lower the threshold in server config.</div>
           ) : (
-            searchResults.results.map((r, i) => (
+            (searchResults.results ?? []).map((r, i) => (
               <div key={r.chunkId} className="rag-chunk-card">
                 <div className="rag-chunk-header">
                   <span className="rag-chunk-num">#{i + 1}</span>
-                  <span className="rag-chunk-score">Score: {r.score.toFixed(4)}</span>
-                  <span className="rag-chunk-source">{r.source.title} — {r.source.organization}</span>
-                  {r.source.pageNumber && <span className="rag-chunk-page">p.{r.source.pageNumber}</span>}
+                  <span className="rag-chunk-score">Score: {(r.score ?? 0).toFixed(4)}</span>
+                  <span className="rag-chunk-source">{r.source?.title} — {r.source?.organization}</span>
+                  {r.source?.pageNumber && <span className="rag-chunk-page">p.{r.source.pageNumber}</span>}
                 </div>
                 <p className="rag-chunk-text">{r.textPreview}</p>
               </div>
@@ -779,16 +779,16 @@ function RagTestConsole() {
           <div className="rag-answer-box">
             {askResult.answer}
           </div>
-          {askResult.sources.length > 0 && (
+          {(askResult.sources ?? []).length > 0 && (
             <div className="rag-sources">
               <h4 className="rag-sources-title">Sources</h4>
-              {askResult.sources.map((s) => (
+              {(askResult.sources ?? []).map((s) => (
                 <div key={s.documentId} className="rag-source-card">
                   <span className="rag-source-title">{s.title}</span>
                   <span className="rag-source-org">{s.organization}</span>
                   {s.documentDate && <span className="rag-source-date">{s.documentDate}</span>}
                   {s.pageNumbers?.length > 0 && (
-                    <span className="rag-source-pages">Pages: {s.pageNumbers.join(', ')}</span>
+                    <span className="rag-source-pages">Pages: {(s.pageNumbers ?? []).join(', ')}</span>
                   )}
                 </div>
               ))}

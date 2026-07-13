@@ -29,7 +29,7 @@ const INTENT_LABEL = {
 
 function MarkdownLike({ content }) {
   // Lightweight markdown renderer: bold + line breaks + numbered lists
-  const lines = content.split('\n')
+  const lines = (content || '').split('\n')
   return (
     <span>
       {lines.map((line, lineIdx) => {

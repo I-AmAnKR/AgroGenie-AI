@@ -59,13 +59,13 @@ function RecommendationCard({ rec, expanded, onToggle }) {
           <div className="rec-section">
             <p className="rec-section-label">Why this crop?</p>
             <ul className="rec-list">
-              {rec.reasons.map((r, i) => <li key={i}>{r}</li>)}
+              {(rec.reasons ?? []).map((r, i) => <li key={i}>{r}</li>)}
             </ul>
           </div>
           <div className="rec-section">
             <p className="rec-section-label rec-section-label-warning"><AlertTriangle size={12} aria-hidden="true" /> Key Risks</p>
             <ul className="rec-list rec-list-warning">
-              {rec.risks.map((r, i) => <li key={i}>{r}</li>)}
+              {(rec.risks ?? []).map((r, i) => <li key={i}>{r}</li>)}
             </ul>
           </div>
           <div className="rec-section">
@@ -73,7 +73,7 @@ function RecommendationCard({ rec, expanded, onToggle }) {
             <p className="text-sm text-secondary">{rec.marketObservation}</p>
           </div>
           <div className="rec-sources">
-            {rec.evidenceSources.map((s, i) => (
+            {(rec.evidenceSources ?? []).map((s, i) => (
               <span key={i} className="badge badge-neutral text-xs">{s}</span>
             ))}
           </div>
@@ -271,9 +271,9 @@ export default function CropAdvisor() {
                 <h2>Recommendations for {form.state || 'your farm'}</h2>
                 <DemoDataBadge />
               </div>
-              {results.recommendations.map((rec, i) => (
+              {(results.recommendations ?? []).map((rec, i) => (
                 <RecommendationCard
-                  key={rec.rank}
+                  key={rec.rank ?? i}
                   rec={rec}
                   expanded={expanded === i}
                   onToggle={() => setExpanded(expanded === i ? null : i)}
@@ -294,15 +294,17 @@ export default function CropAdvisor() {
                       </tr>
                     </thead>
                     <tbody>
-                      {results.recommendations.map(rec => (
-                        <tr key={rec.crop}>
+                      {(results.recommendations ?? []).map((rec, idx) => {
+                        const risksLen = (rec.risks ?? []).length;
+                        return (
+                        <tr key={rec.crop ?? idx}>
                           <td style={{ fontWeight: 600 }}>{rec.crop}</td>
                           <td><span className={`badge ${rec.suitabilityColor === 'success' ? 'badge-success' : rec.suitabilityColor === 'info' ? 'badge-info' : 'badge-warning'}`}>{rec.suitabilityScore}/100</span></td>
                           <td>{rec.waterRequirement}</td>
-                          <td>{rec.risks.length === 1 ? 'Low' : rec.risks.length === 2 ? 'Moderate' : 'Higher'}</td>
+                          <td>{risksLen <= 1 ? 'Low' : risksLen === 2 ? 'Moderate' : 'Higher'}</td>
                           <td>{rec.rotationFit}</td>
                         </tr>
-                      ))}
+                      )})}
                     </tbody>
                   </table>
                 </div>

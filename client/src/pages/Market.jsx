@@ -31,9 +31,6 @@ export default function Market() {
         getPriceTrend(filters.commodity, filters.market || 'Lasalgaon')
       ])
 
-      console.log("Prices Response:", p)
-      console.log("Trend Response:", t)
-
       setPrices(
         Array.isArray(p?.data?.records)
           ? p.data.records

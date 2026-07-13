@@ -135,7 +135,7 @@ export default function Dashboard() {
         />
         <StatCard
     title="Market Watch"
-    value={topPrice ? `₹${topPrice.modalPrice.toLocaleString('en-IN')}` : '—'}
+    value={topPrice ? `₹${(topPrice.modalPrice ?? 0).toLocaleString('en-IN')}` : '—'}
     unit="/quintal"
     icon={TrendingUp}
     subtitle={
@@ -227,7 +227,7 @@ export default function Dashboard() {
               <DemoDataBadge />
             </div>
             <div className="card-body forecast-strip">
-              {forecast.map((day) => (
+              {(forecast ?? []).map((day) => (
                 <div key={day.date} className="forecast-day">
                   <span className="forecast-day-label">
                     {new Date(day.date).toLocaleDateString("en-IN", {

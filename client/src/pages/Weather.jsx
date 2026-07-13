@@ -34,10 +34,6 @@ export default function Weather() {
         getForecast(coords.lat, coords.lon),
         getFarmingImpact(coords.lat, coords.lon, profile?.currentCrop)
       ])
-      console.log("Weather Response:", w);
-      console.log("Forecast Response:", f);
-      console.log("Advice Response:", i);
-      
       setWeather(w?.data?.current ?? null)
       setForecast(Array.isArray(f?.data) ? f.data : f?.data?.forecast ?? [])
       setImpacts(i?.data?.impacts ?? [])
