@@ -1,7 +1,12 @@
 import axios from 'axios'
 
+// 1. Centralized API configuration
+// Reads from Vite environment variable. In production, this should be set to the backend URL.
+// Fallback to '/api/v1' for local development to leverage Vite proxy.
+const API_URL = import.meta.env.VITE_API_URL || '/api/v1'
+
 const axiosClient = axios.create({
-  baseURL: '/api/v1',
+  baseURL: API_URL,
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json'
