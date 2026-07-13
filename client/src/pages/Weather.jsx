@@ -38,6 +38,7 @@ export default function Weather() {
     profile?.currentCrop
   )
 ])
+      console.log("Weather Response:", w);
       setWeather(w.data)
       setForecast(f.data)
       setImpacts(i.data.impacts)
@@ -70,7 +71,10 @@ export default function Weather() {
           <span style={{ fontWeight: 600, fontSize: '0.9375rem' }}>{location}</span>
           <DemoDataBadge />
         </div>
-        <FreshnessIndicator timestamp={weather?.fetchedAt} source={weather?.source} />
+        <FreshnessIndicator
+  timestamp={weather?.metadata?.fetchedAt ?? weather?.source?.fetchedAt}
+  source={weather?.metadata?.provider ?? weather?.source?.provider}
+/>
       </div>
 
       {/* Weather alerts */}
