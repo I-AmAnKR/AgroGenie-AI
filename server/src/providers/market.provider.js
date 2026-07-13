@@ -593,6 +593,26 @@ export const realMarketProvider = {
       limit: limit ?? config.market.maxRecords,
     })
   },
+  async getTrend({ commodity, market }) {
+  const result = await this.getPrices({
+    commodity,
+    limit: 100,
+  });
+
+  const trend = (result.records || [])
+    .filter(r => r.modalPrice != null && r.priceDate)
+    .sort((a, b) => new Date(a.priceDate) - new Date(b.priceDate))
+    .slice(-7)
+    .map(r => ({
+      date: r.priceDate,
+      price: r.modalPrice,
+    }));
+
+  return {
+    trend,
+    metadata: result.metadata,
+  };
+},
 
   /**
    * Readiness check — validates configuration without a live API call.

@@ -72,10 +72,21 @@ export default function Dashboard() {
           getPrices({ commodity: 'Onion', state: 'Maharashtra' }),
           getPriceTrend('Onion', 'Lasalgaon'),
         ])
-        setWeather(w.data)
-        setForecast(f.data)
-        setPrices(p.data.prices)
-        setPriceTrend(pt.data.trend)
+        setWeather(w?.data ?? {})
+
+        setForecast(
+            Array.isArray(f?.data)
+                ? f.data
+                : f?.data?.forecast ?? []
+        )
+
+        setPrices(
+            Array.isArray(p?.data)
+                ? p.data
+                : p?.data?.prices ?? []
+        )
+
+        setPriceTrend(pt?.data?.trend ?? [])
       } finally {
         setLoading(false)
       }
@@ -83,8 +94,10 @@ export default function Dashboard() {
     load()
   }, [])
 
-  const topPrice = prices[0]
-  const sowingDate = profile?.farm?.sowingDate ? new Date(profile.farm.sowingDate) : null
+  const topPrice = prices?.[0] ?? null
+  const sowingDate = profile?.sowingDate
+  ? new Date(profile.sowingDate)
+  : null
   const daysSinceSowing = sowingDate ? Math.floor((Date.now() - sowingDate.getTime()) / 86400000) : null
 
   if (loading) return <LoadingSpinner fullPage text="Loading your farm intelligence..." />
@@ -109,27 +122,37 @@ export default function Dashboard() {
       <div className="grid-4 dash-summary">
         <StatCard
           title="Weather Today"
-          value={weather?.temp ?? '—'}
+          value={weather?.current?.temperatureC ?? "—"}
           unit="°C"
           icon={CloudSun}
-          subtitle={`${weather?.condition} · Rain ${weather?.rainProbability}%`}
+          subtitle={`${weather?.current?.condition ?? "Unknown"} · Rain ${
+            weather?.forecast?.[0]?.precipitationProbabilityPercent ?? 0
+          }%`}
           color="var(--color-info)"
         />
         <StatCard
           title="Current Crop"
-          value={profile?.farm?.currentCrop ?? '—'}
+          value={profile?.currentCrop ?? '—'}
           icon={Sprout}
           subtitle={daysSinceSowing !== null ? `${daysSinceSowing} days since sowing` : 'Sowing date not set'}
           color="var(--color-primary)"
         />
         <StatCard
           title="Market Watch"
-          value={topPrice ? `₹${topPrice.modalPrice.toLocaleString('en-IN')}` : '—'}
-          unit={topPrice?.unit?.replace('per ', '/') ?? ''}
+          value={
+            topPrice?.modalPrice != null
+              ? `₹${topPrice.modalPrice.toLocaleString("en-IN")}`
+              : "—"
+          }
+          unit="/quintal"
           icon={TrendingUp}
-          trend={topPrice?.trend}
-          trendLabel={topPrice ? `${topPrice.trendPct > 0 ? '+' : ''}${topPrice.trendPct}% this week` : ''}
-          subtitle={topPrice ? `${topPrice.commodity} · ${topPrice.market}` : ''}
+          trend={false}
+          trendLabel=""
+          subtitle={
+            topPrice
+              ? `${topPrice.commodity} • ${topPrice.market}`
+              : "No market data"
+          }
           color="var(--color-accent-dark)"
         />
         <div className="alert-card card">
@@ -214,13 +237,33 @@ export default function Dashboard() {
               <DemoDataBadge />
             </div>
             <div className="card-body forecast-strip">
-              {forecast.map(day => (
+              {forecast.map((day) => (
                 <div key={day.date} className="forecast-day">
-                  <span className="forecast-day-label">{day.day}</span>
-                  <span className="forecast-icon">{day.rainProb > 50 ? '🌧' : day.rainProb > 25 ? '⛅' : '☀️'}</span>
-                  <span className="forecast-hi">{day.tempMax}°</span>
-                  <span className="forecast-lo">{day.tempMin}°</span>
-                  <span className="forecast-rain">{day.rainProb}%</span>
+                  <span className="forecast-day-label">
+                    {new Date(day.date).toLocaleDateString("en-IN", {
+                      weekday: "short",
+                    })}
+                  </span>
+
+                  <span className="forecast-icon">
+                    {day.precipitationProbabilityPercent > 50
+                      ? "🌧"
+                      : day.precipitationProbabilityPercent > 25
+                      ? "⛅"
+                      : "☀️"}
+                  </span>
+
+                  <span className="forecast-hi">
+                    {day.maxTemperatureC}°
+                  </span>
+
+                  <span className="forecast-lo">
+                    {day.minTemperatureC}°
+                  </span>
+
+                  <span className="forecast-rain">
+                    {day.precipitationProbabilityPercent}%
+                  </span>
                 </div>
               ))}
             </div>
